@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+  <style>
+  #pile1, #pile2, #pile3 {
+  font-size: 24px; /* sets the font size of the text to 24 pixels */
+  font-weight: bold; /* makes the text bold */
+  color: blue; /* sets the font color to blue */
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+h2{
+     color: black;
+  font-family: "arial";
+  font-size: 3em;
+  margin: 10px 0 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+  animation: animtext 4s steps(80, end);
+   transition: all cubic-bezier(0.1, 0.7, 1.0, 0.1);
+}
+@keyframes animtext {
+  from {
+      width: 0;
+     transition: all 2s ease-in-out;
+  }
+}
+
+  </style>
+  <title>WebSocket Example</title>
+  <script th:src="@{/webjars/sockjs-client/sockjs.min.js}"></script>
+  <script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>
+  <script th:inline="javascript">
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/messages', function (message) {
+                    setStatusMessage(JSON.parse(message.body));
+                    setPileCount(JSON.parse(message.body));
+                    setCurPlayer(JSON.parse(message.body));
+                    setGameStatus(JSON.parse(message.body));
+                    setWinnerName(JSON.parse(message.body));
+                });
+            });
+        }
+
+
+function setWinnerName(game) {
+    var messageBox = document.createElement('div');
+    messageBox.innerHTML = game.winnerName;
+    var messagesElement = document.getElementById('WinnerName');
+    messagesElement.innerHTML = "";
+    messagesElement.appendChild(messageBox);
+
+    }
+
+function setGameStatus(game) {
+    var messageBox = document.createElement('div');
+    messageBox.innerHTML = game.gameStatus;
+    var messagesElement = document.getElementById('gameStatus');
+    messagesElement.innerHTML = "";
+    messagesElement.appendChild(messageBox);
+
+    }
+       function setStatusMessage(game) {
+    var messageBox = document.createElement('div');
+    messageBox.innerHTML = game.statusMessage;
+    var messagesElement = document.getElementById('status');
+    messagesElement.innerHTML = "";
+    messagesElement.appendChild(messageBox);
+
+    }
+     function setCurPlayer(game) {
+    var messageBox = document.createElement('div');
+    messageBox.innerHTML = 'Current Player is: ' + game.currentPlayer;
+    var messagesElement = document.getElementById('CurPlayer');
+    messagesElement.innerHTML = "";
+    messagesElement.appendChild(messageBox);
+
+    var messageBox1 = document.createElement('div');
+    messageBox1.innerHTML = 'Player1 Score is: ' + game.player1Score;
+    var messagesElement1 = document.getElementById('p1Score');
+    messagesElement1.innerHTML = "";
+    messagesElement1.appendChild(messageBox1);
+
+    var messageBox2 = document.createElement('div');
+    messageBox2.innerHTML = 'Player2 Score is: ' + game.player2Score;
+    var messagesElement2 = document.getElementById('p2Score');
+    messagesElement2.innerHTML = "";
+    messagesElement2.appendChild(messageBox2);
+
+
+
+    }
+
+       function setPileCount(game) {
+    var messageBox = document.createElement('div1');
+    messageBox.innerHTML = 'Pile-1: ' + game.pile1Size + ' stones';
+    var messagesElement = document.getElementById('pile1');
+    messagesElement.innerHTML = "";
+    messagesElement.appendChild(messageBox);
+
+    var messageBox1 = document.createElement('div2');
+    messageBox1.innerHTML = 'Pile-2: ' + game.pile2Size + ' stones';
+    var messagesElement1 = document.getElementById('pile2');
+    messagesElement1.innerHTML = "";
+    messagesElement1.appendChild(messageBox1);
+
+    var messageBox2 = document.createElement('div3');
+    messageBox2.innerHTML = 'Pile-3: ' + game.pile3Size + ' stones';
+    var messagesElement2 = document.getElementById('pile3');
+    messagesElement2.innerHTML = "";
+    messagesElement2.appendChild(messageBox2);
+
+    var messageBox3 = document.createElement('div4');
+    messageBox3.innerHTML = 'Minimum stones to pick up: ' + game.minStonesToPickUp + ' stones';
+    var messagesElement3= document.getElementById('minStonesToPickUp');
+    messagesElement3.innerHTML = "";
+    messagesElement3.appendChild(messageBox3);
+
+    var messageBox4 = document.createElement('div5');
+    messageBox4.innerHTML = 'Maximum stones to pick up: ' + game.maxStonesToPickUp + ' stones';
+    var messagesElement4= document.getElementById('maxStonesToPickUp');
+    messagesElement4.innerHTML = "";
+    messagesElement4.appendChild(messageBox4);
+
+    }
+
+    </script>
+</head>
+<body onload="connect()">
+<br>
+<div class="text-center">
+  <h1 class="h1">Manideep Shanigaram - 24224</h1>
+</div>
+
+<hr>
+<br>
+
+<div class="col-md-6">
+  <div class="card w-100 h-60" style="background-color: #F8F9FA; border: 1px solid #dee2e6; padding: 20px;">
+    <div> <span> Screen of : </span> <span id="player" th:text = "${player}"></span>
+  </div>
+</div>
+
+<br>
+
+<div class="col-md-6">
+  <div class="card w-100 h-60" style="background-color: #F8F9FA; border: 1px solid #dee2e6; padding: 20px;">
+    <div id="status"></div>
+    <br>
+    <div id="pile1"></div>
+    <div id="pile2"></div>
+    <div id="pile3"></div>
+    <div id="minStonesToPickUp"></div>
+    <div id="maxStonesToPickUp"></div>
+
+  </div>
+</div>
+
+<br>
+<div class="col-md-6">
+  <div class="card w-100 h-60" style="background-color: #F8F9FA; border: 1px solid #dee2e6; padding: 20px;">
+    <div id="CurPlayer"></div>
+    <div id="p1Score"></div>
+    <div id="p2Score"></div>
+  </div>
+</div>
+
+<br>
+
+<div class="col-md-6">
+  <div class="card w-100 h-60" style="background-color: #F8F9FA; border: 1px solid #dee2e6; padding: 20px;">
+    <div id="gameStatus"></div>
+  </div>
+</div>
+
+
+<script>
+  // Get the gameStatus element
+const gameStatusElement = document.getElementById("gameStatus");
+
+// Get the submit button
+const submitButton = document.querySelector("#myForm button[type=submit]");
+
+// Check if the gameStatus is "Completed"
+if (gameStatusElement.innerText.trim() === "Completed") {
+  // Disable the submit button
+  submitButton.disabled = true;
+}
+
+</script>
+<br>
+
+
+<div class="col-md-6">
+  <div class="card w-100 h-60" style="background-color: #F8F9FA; border: 1px solid #dee2e6; padding: 20px;">
+    <form id="myForm" action="#" th:action="@{/pickup}" th:object="${pickup}" method="post">
+      <div class="form-group">
+        <div class="row">
+          <div class="col-md-4">
+            <label for="selectedPile">Select which pile</label>
+          </div>
+          <div class="col-md-4">
+            <input type="number" id="selectedPile" name="selectedPile" class="form-control" min="1" max="3" required>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="row">
+          <div class="col-md-4">
+            <label for="stonesPickedUp">Number of Stones to Pick Up:</label>
+          </div>
+          <div class="col-md-4">
+            <input type="number" id="stonesPickedUp" name="stonesPickedUp" class="form-control" min="${gameRound.minStonesToPickup}" max="${gameRound.maxStonesToPickup}" required>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Pick Up Stones</button>
+      <div id="timer-container">
+        <div id="timer"></div>
+      </div>
+    </form>
+
+    <script>
+  // get a reference to the form
+  var form = document.getElementById('myForm');
+
+  // attach an event listener to the form's submit event
+  form.addEventListener('submit', function(event) {
+    // prevent the default form submission behavior
+    event.preventDefault();
+
+    // create a new XMLHttpRequest object
+    var xhr = new XMLHttpRequest();
+
+    // create a new FormData object using the form element
+    var formData = new FormData(form);
+
+var url = window.location.href;
+var parts = url.split("/");
+var lastPart = parts[parts.length - 1];
+
+    // configure the request
+<!--    var baseUrl = "http://localhost:8080";-->
+var baseUrl = "https://pileofstonesbdcc.azurewebsites.net";
+var pickupUrl = baseUrl + "/pickup/" + lastPart;
+xhr.open('POST', pickupUrl, true);
+
+    // send the request with the FormData object as the body
+    xhr.send(formData);
+  });
+</script>
+
+   <!-- <script>
+  const timerDuration = 10;
+  let timer = timerDuration;
+
+  const gameStatusElem = document.getElementById("gameStatus");
+
+
+  function updateTimer() {
+  var url = window.location.href;
+var parts = url.split("/");
+var lastPart = parts[parts.length - 1];
+
+
+const curplayer = document.getElementById("player").innerText;
+
+    const gameStatus = gameStatusElem.innerText.trim();
+    console.log(curplayer);
+    console.log(lastPart);
+
+    if ((gameStatus === "Started" || gameStatus === "Playing" ) && lastPart ===curplayer) {
+      document.getElementById("timer").innerText = `Time remaining: ${timer} seconds`;
+      timer&#45;&#45;;
+      if (timer < 0) {
+        clearInterval(intervalId);
+        fetch("http://localhost:8080/timeout/"+lastPart)
+&lt;!&ndash;          .then(response => response.json())&ndash;&gt;
+&lt;!&ndash;          .then(data => console.log(data))&ndash;&gt;
+          .catch(error => console.error(error));
+      }
+    }
+  }
+
+  const intervalId = setInterval(updateTimer, 1000);
+</script>-->
+
+    <script>
+  const timerDuration = 60;
+  let timer = timerDuration;
+  const gameStatusElem = document.getElementById("gameStatus");
+  const curPlayerElem = document.getElementById("player");
+  const curPlayer = curPlayerElem.innerText;
+  const url = new URL(window.location.href);
+  const urlPlayer = url.pathname.split("/").pop();
+
+  function updateTimer() {
+    const gameStatus = gameStatusElem.innerText.trim();
+    if (gameStatus === "Started" || gameStatus === "Playing") {
+      if (curPlayer === urlPlayer) {
+        document.getElementById("timer").innerText = `Time remaining: ${timer} seconds`;
+        timer&#45;&#45;;
+        if (timer < 0) {
+          clearInterval(intervalId);
+          fetch("http://localhost:8080/timeout/"+urlPlayer)
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error(error));
+        }
+      }
+    }
+  }
+
+  const intervalId = setInterval(updateTimer, 1000);
+</script>
+
+
+
+
+  </div>
+
+</div>
+
+
+<br>
+<div class="col-md-6">
+  <div class="card w-100 h-60" style="background-color: #F8F9FA; border: 1px solid #dee2e6; padding: 20px;">
+    <div id="WinnerName"></div>
+  </div>
+</div>
+
+<br>
+<br>
+<br>
+</body>
+</html>
