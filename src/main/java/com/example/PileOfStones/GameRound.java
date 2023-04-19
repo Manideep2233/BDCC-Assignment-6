@@ -31,5 +31,6 @@ public class GameRound {
     private String gameStatus;
     private String winnerName;
     private String currentPlayerScore;
+    private int timeLeft;
 
 }

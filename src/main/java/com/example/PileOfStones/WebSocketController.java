@@ -34,37 +34,65 @@ public class WebSocketController {
                             Model model, HttpServletRequest request) {
         HttpSession session = request.getSession();
         gameRound.setStatusMessage("Piles of Stones Game");
+        if(gameRound.getCurrentPlayer().equals("player1")) {
+            gameRound.setCurrentPlayer(gameRound.getPlayer1Name());
+        }
+        else {
+            gameRound.setCurrentPlayer(gameRound.getPlayer2Name());
+        }
         gameRound.setGameStatus("Started");
         gameRound.setWinnerName("");
         session.setAttribute("gameRoundObj", gameRound);
+        gameRound.setTimeLeft(60);
         messagingTemplate.convertAndSend("/topic/messages", gameRound);
         model.addAttribute("gameRound", gameRound);
-        return  "admin";
+        return "admin";
     }
 
     @GetMapping("/play/{player}")
     public String player(@PathVariable String player
             , Model model, HttpServletRequest request) {
-        model.addAttribute("player", player);
-
         HttpSession session = request.getSession();
         GameRound gameRoundObj = (GameRound) session.getAttribute("gameRoundObj");
-        if(gameRoundObj==null){
+
+        if (gameRoundObj == null) {
             model.addAttribute("message", "Please Ask Admin to start the game first");
             gameRoundObj = new GameRound();
-            model.addAttribute("Score",0);
+            model.addAttribute("Score", 0);
             gameRoundObj.setStatusMessage("Please Ask Admin to start the game first...");
-        }
-        else{
+        } else {
             model.addAttribute("Score",
-                    player.equals("player1")?gameRoundObj.getPlayer1Score():gameRoundObj.getPlayer2Score());
+                    player.equals("player1") ? gameRoundObj.getPlayer1Score() : gameRoundObj.getPlayer2Score());
             model.addAttribute("message", "Piles of Stones Game");
             gameRoundObj.setStatusMessage("Piles of Stones Game");
+            if (player.equals("player1")) {
+                model.addAttribute("player", gameRoundObj.getPlayer1Name());
+            } else {
+                model.addAttribute("player", gameRoundObj.getPlayer2Name());
+            }
         }
 
         return "player";
     }
 
+
+    @GetMapping("/getName/{player}")
+    public ResponseEntity<?> getName(@PathVariable String player
+            , Model model, HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        GameRound gameRoundObj = (GameRound) session.getAttribute("gameRoundObj");
+        String name = "";
+        if(gameRoundObj ==null){
+            name = "None";
+        }
+        if (player.equals("player1")) {
+            name = gameRoundObj.getPlayer1Name();
+        } else {
+            name = gameRoundObj.getPlayer2Name();
+        }
+
+        return ResponseEntity.ok(name);
+    }
 
     @PostMapping("/pickup/{player}")
     public ResponseEntity<?> pickupStones(@ModelAttribute Pickup pickup, Model model,
@@ -72,6 +100,12 @@ public class WebSocketController {
                                @PathVariable String player) {
         HttpSession session = request.getSession();
         GameRound gameRoundObj = (GameRound) session.getAttribute("gameRoundObj");
+        if (player.equals("player1")) {
+            player = gameRoundObj.getPlayer1Name();
+        }
+        else {
+            player = gameRoundObj.getPlayer2Name();
+        }
         if (!player.equals(gameRoundObj.getCurrentPlayer())) {
             return null;
         }
@@ -80,10 +114,7 @@ public class WebSocketController {
           return null;
         }
 
-        System.out.println(gameRoundObj.getCurrentPlayer());
-        System.out.println(gameRoundObj.getMinStonesToPickUp() );
-        System.out.println(gameRoundObj.getMaxStonesToPickUp() );
-        if (gameRoundObj.getCurrentPlayer().equals("player1")
+        if (gameRoundObj.getCurrentPlayer().equals(gameRoundObj.getPlayer1Name())
         && pickup.getStonesPickedUp()>= gameRoundObj.getMinStonesToPickUp()
         && pickup.getStonesPickedUp() <= gameRoundObj.getMaxStonesToPickUp()) {
 
@@ -93,7 +124,7 @@ public class WebSocketController {
             }
             if (pickup.getSelectedPile()==1  &&
                     gameRoundObj.getPile1Size()-pickup.getStonesPickedUp()>=0) {
-                gameRoundObj.setCurrentPlayer("player2");
+                gameRoundObj.setCurrentPlayer(gameRoundObj.getPlayer2Name());
                 gameRoundObj.setPlayer1Score(gameRoundObj.getPlayer1Score() + pickup.getStonesPickedUp());
                 gameRoundObj.setPile1Size(gameRoundObj.getPile1Size() - pickup.getStonesPickedUp());
                 String history = "\n"+gameRoundObj.getCurrentPlayer() + " picked up " + pickup.getStonesPickedUp()
@@ -103,7 +134,7 @@ public class WebSocketController {
             }
             else if (pickup.getSelectedPile()==2 &&
                     gameRoundObj.getPile2Size()-pickup.getStonesPickedUp()>=0) {
-                gameRoundObj.setCurrentPlayer("player2");
+                gameRoundObj.setCurrentPlayer(gameRoundObj.getPlayer2Name());
                 gameRoundObj.setPlayer1Score(gameRoundObj.getPlayer1Score() + pickup.getStonesPickedUp());
                 gameRoundObj.setPile2Size(gameRoundObj.getPile2Size() - pickup.getStonesPickedUp());
                 String history = "\n"+gameRoundObj.getCurrentPlayer() + " picked up " + pickup.getStonesPickedUp()
@@ -113,7 +144,7 @@ public class WebSocketController {
             }
             else if (pickup.getSelectedPile()==3 &&
                     gameRoundObj.getPile3Size()-pickup.getStonesPickedUp()>=0) {
-                gameRoundObj.setCurrentPlayer("player2");
+                gameRoundObj.setCurrentPlayer(gameRoundObj.getPlayer2Name());
                 gameRoundObj.setPlayer1Score(gameRoundObj.getPlayer1Score() + pickup.getStonesPickedUp());
                 gameRoundObj.setPile3Size(gameRoundObj.getPile3Size() - pickup.getStonesPickedUp());
                 String history = "\n"+gameRoundObj.getCurrentPlayer() + " picked up " + pickup.getStonesPickedUp()
@@ -123,7 +154,7 @@ public class WebSocketController {
             }
             gameRoundObj.setGameStatus("Playing");
         }
-        else if (gameRoundObj.getCurrentPlayer().equals("player2")
+        else if (gameRoundObj.getCurrentPlayer().equals(gameRoundObj.getPlayer2Name())
                 && pickup.getStonesPickedUp()>= gameRoundObj.getMinStonesToPickUp()
                 && pickup.getStonesPickedUp() <= gameRoundObj.getMaxStonesToPickUp()) {
             if(gameRoundObj.getPickupHistory()==null){
@@ -135,7 +166,7 @@ public class WebSocketController {
             if (pickup.getSelectedPile()==1  &&
                     gameRoundObj.getPile1Size()-pickup.getStonesPickedUp()>=0) {
                 gameRoundObj.setPile1Size(gameRoundObj.getPile1Size() - pickup.getStonesPickedUp());
-                gameRoundObj.setCurrentPlayer("player1");
+                gameRoundObj.setCurrentPlayer(gameRoundObj.getPlayer1Name());
                 gameRoundObj.setPlayer2Score(gameRoundObj.getPlayer2Score() + pickup.getStonesPickedUp());
                 String history = "\n"+gameRoundObj.getCurrentPlayer() + " picked up " + pickup.getStonesPickedUp()
                         + " stones from pile " + pickup.getSelectedPile() + ", and player Score is " + gameRoundObj.getPlayer2Score();
@@ -144,7 +175,7 @@ public class WebSocketController {
             else if (pickup.getSelectedPile()==2 &&
                     gameRoundObj.getPile2Size()-pickup.getStonesPickedUp()>=0) {
                 gameRoundObj.setPile2Size(gameRoundObj.getPile2Size() - pickup.getStonesPickedUp());
-                gameRoundObj.setCurrentPlayer("player1");
+                gameRoundObj.setCurrentPlayer(gameRoundObj.getPlayer1Name());
                 gameRoundObj.setPlayer2Score(gameRoundObj.getPlayer2Score() + pickup.getStonesPickedUp());
                 String history = "\n"+gameRoundObj.getCurrentPlayer() + " picked up " + pickup.getStonesPickedUp()
                         + " stones from pile " + pickup.getSelectedPile() + ", and player Score is " + gameRoundObj.getPlayer2Score();
@@ -153,7 +184,7 @@ public class WebSocketController {
             else if (pickup.getSelectedPile()==3
                     && gameRoundObj.getPile3Size()-pickup.getStonesPickedUp()>=0) {
                 gameRoundObj.setPile3Size(gameRoundObj.getPile3Size() - pickup.getStonesPickedUp());
-                gameRoundObj.setCurrentPlayer("player1");
+                gameRoundObj.setCurrentPlayer(gameRoundObj.getPlayer1Name());
                 gameRoundObj.setPlayer2Score(gameRoundObj.getPlayer2Score() + pickup.getStonesPickedUp());
                 String history = "\n"+gameRoundObj.getCurrentPlayer() + " picked up " + pickup.getStonesPickedUp()
                         + " stones from pile " + pickup.getSelectedPile() + ", and player Score is " + gameRoundObj.getPlayer2Score();
@@ -172,7 +203,7 @@ public class WebSocketController {
                 gameRoundObj.setWinnerName("Draw: Both players have equal score");
             }
             else{
-                String winner = gameRoundObj.getPlayer1Score() > gameRoundObj.getPlayer2Score() ? "player1" : "player2";
+                String winner = gameRoundObj.getPlayer1Score() < gameRoundObj.getPlayer2Score() ? gameRoundObj.getPlayer1Name() : gameRoundObj.getPlayer2Name();
                 gameRoundObj.setWinnerName("winner is " +winner);
             }
             messagingTemplate.convertAndSend("/topic/messages", gameRoundObj);
@@ -197,7 +228,9 @@ public class WebSocketController {
                                           @PathVariable String player) {
         HttpSession session = request.getSession();
         GameRound gameRoundObj = (GameRound) session.getAttribute("gameRoundObj");
-        gameRoundObj.setWinnerName("winner is " + gameRound.getWinnerName());
+        String playerName = gameRound.getWinnerName().equals("player1") ? gameRoundObj.getPlayer1Name() : gameRoundObj.getPlayer2Name();
+
+        gameRoundObj.setWinnerName("winner is " + playerName);
 
         messagingTemplate.convertAndSend("/topic/messages", gameRoundObj);
         session.setAttribute("gameRoundObj", gameRoundObj);
@@ -215,6 +248,8 @@ public class WebSocketController {
         HttpSession session = request.getSession();
         GameRound gameRoundObj = (GameRound) session.getAttribute("gameRoundObj");
         gameRoundObj.setGameStatus("Completed");
+        System.out.println("completed" );
+        System.out.println(player);
         gameRoundObj.setWinnerName(player + " has Lost the Game!");
         messagingTemplate.convertAndSend("/topic/messages", gameRoundObj);
         session.setAttribute("gameRoundObj", gameRoundObj);
